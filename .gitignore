@@ -3,7 +3,3 @@
 .*swo
 .*~
 .directory
-pkg/
-.yardoc/
-doc/
-pkg/
