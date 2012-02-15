@@ -1,12 +1,12 @@
-namespace :gem do
+namespace :internal do
   desc "List all Ruby files of a gem ('rstore/lib' by default)"
   task :list_files, :gem_name, :sub_folder do |t, args|
     args.with_defaults(:gem_name => '', :sub_folder => 'lib')
-    gem    = args[:gem_name]
-    folder = args[:sub_folder]
-    raise Exception, "Name of gem not specified" if gem.empty?
+    @gem    = args[:gem_name]
+    @folder = args[:sub_folder]
+    raise Exception, "Name of gem not specified" if @gem.empty?
 
-    path = File.join('.', gem, folder)
+    path = File.join('.', @gem, @folder)
     # Destination gem folder must at the top level of the current directory
     if Dir.exists?(path)
       Dir.chdir(path) do
@@ -25,18 +25,18 @@ namespace :gem do
         end
       end
     else
-      raise Exception, "Gem '#{gem}' not found. \nMake sure the gem folder and the Rakefile are in the same directory."
+      raise Exception, "Gem '#{@gem}' not found. \nMake sure the gem folder and the Rakefile are in the same directory."
     end
   end
 
   desc "List all dependencies"
-  task :deps, [:gem_name, :sub_folder] => ["gem:list_files"] do |t, args|
+  task :deps, [:gem_name, :sub_folder] => ["list_files"] do |t, args|
     # Remove references to files required with a path, such as
     # require 'to/path/name'
     # These are references to internal files, not to external gems.
-    file_sep = Regexp.new(Regexp.escape("/"))
+    # file_sep = Regexp.new(Regexp.escape("/"))
+    file_sep = /\//
     files_required = @with_require.reject {|line| line =~ file_sep }
-    files_required
 
     # Extract gem name
     files_required.map! do |gem|
@@ -51,7 +51,45 @@ namespace :gem do
     # who are on the load path ($:). Files in these folder are 'required' without a path and
     # therefore were not removed using #reject above.
     files_on_path = @ruby_files.reject {|path| path =~ file_sep }
-    external_gems = files_required.reject {|name| files_on_path.any? {|file| name == File.basename(file, '.rb') } }
-    p external_gems
+    # Remove filename suffix to allow for a direct comparison in the last step
+    files_on_path.map! {|name_and_suffix| File.basename(name_and_suffix, '.rb') }
+    @external_dependencies = files_required.reject {|name| files_on_path.include?(name) }
+
+    @external_dependencies
   end
 end
+
+namespace :gem do
+  desc "List dependencies (handle development dependencies special)"
+  task :deps, [:gem_name, :sub_folder] => ["internal:deps"] do |t, args|
+
+    if @folder == 'lib'
+      p @external_dependencies
+    else
+      all_development_dependencies = @external_dependencies
+      # Development dependencies by definition are gems that are used for development purposes ONLY.
+      # Hence we have to remove those gems, that are already included in the default gems under
+      # the /lib folder.
+      # To do this we run the above tasks again, this time searching /lib. Then we can exclude
+      # any gems from 'all_development_dependencies' that are also part of the default dependencies.
+
+      # Rake::Task.reenable resets the task's already_invoked state,
+      # allowing the task to then be executed again.
+      # Note: All tasks that are to be run again (either directly by calling 'invoke' or
+      # indirectly as part of the dependency chain) need to be re-enabled,
+      # because dependencies already invoked are not re-executed.
+      Rake::Task["internal:list_files"].reenable
+      Rake::Task["internal:deps"].reenable
+      Rake::Task["internal:deps"].invoke(@gem, 'lib')
+      # After invoking the above task with the default folder name 'lib' again,
+      # @external_dependencies now equals the default dependencies.
+      default_dependencies = @external_dependencies
+      development_dependencies = all_development_dependencies.reject {|gem| default_dependencies.include?(gem) }
+      p development_dependencies
+    end
+  end
+end
+
+# Conclusion:
+# The code for re-running a task looks kind of messy.
+# Next time I might consider writing these tasks as normal methods.
