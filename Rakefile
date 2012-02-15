@@ -83,8 +83,8 @@ namespace :gem do
       Rake::Task["internal:deps"].invoke(@gem, 'lib')
       # After invoking the above task with the default folder name 'lib' again,
       # @external_dependencies now equals the default dependencies.
-      default_dependencies = @external_dependencies
-      development_dependencies = all_development_dependencies.reject {|gem| default_dependencies.include?(gem) }
+      runtime_dependencies = @external_dependencies
+      development_dependencies = all_development_dependencies.reject {|gem| runtime_dependencies.include?(gem) }
       p development_dependencies
     end
   end
