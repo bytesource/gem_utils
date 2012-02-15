@@ -21,8 +21,10 @@ The rake task gem:deps can take one or two parameters.
 
 The following examples use the gem `rstore` as an example:
 
-#### List runtime dependencies.
-Arguments:
+**List runtime dependencies**
+
+**Arguments**:
+
 * First: Name of the gem
 
 ``` bash
@@ -30,9 +32,11 @@ $ rake gem:deps['rstore']
 # => ["open-uri", "nokogiri", "bigdecimal", "sequel", "csv"]
 ```
 
-#### List development dependencies
+**List development dependencies**
 (Gems used for development purposes only)
-Arguments:
+
+**Arguments**:
+
 * First: Name of the gem
 * Second: Name of the test folder
 
