@@ -9,7 +9,7 @@ The first and only feature so far is finding all dependencies of your gem:
 Gem dependencies are specified in the *gemspec* file with `Gem::Specification.add_dependency`
 and `Gem::Specification.add_development_dependency`, respectively [Documentation](http://docs.rubygems.org/read/chapter/20#dependencies).
 This Rakefile automates the task of figuring out all dependencies, a task that
-that otherwise could be quite time consuming depending on the size of the gem.
+can be quite time consuming and failure prone if done manually.
 
 ## Usage
 
@@ -43,8 +43,8 @@ $ rake gem:deps['rstore','spec']
 # => ["rspec"]
 
 # In this case *sequel* actually requires two additional gems,
-# *mysql* and *sqlite3-ruby*, but these dependencies are not revealed,
-# before running the test.
+# *mysql* and *sqlite3*, but these dependencies are internal to *sequel*
+# and not revealed until actually running the tests.
 ```
 
 **Note**: There must *not* be any whitespace between the start of task name and the closing `]`.
