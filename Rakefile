@@ -46,14 +46,26 @@ namespace :internal do
     # Remove duplicates
     files_required.uniq!
 
-    # Finally remove all gems with the same name as one of the source files listed above.
-    # They are not external gems, but normal source files located in /lib or /spec (e.g. 'spec_helper')
+    # Finally remove all gems with the same name as any of the source files listed above.
+    # These are not external gems, but normal source files located in /lib or /spec (e.g. 'spec_helper')
     # who are on the load path ($:). Files in these folder are 'required' without a path and
     # therefore were not removed using #reject above.
     files_on_path = @ruby_files.reject {|path| path =~ file_sep }
     # Remove filename suffix to allow for a direct comparison in the last step
     files_on_path.map! {|name_and_suffix| File.basename(name_and_suffix, '.rb') }
     @external_dependencies = files_required.reject {|name| files_on_path.include?(name) }
+
+    # Remove all gems that are part of Ruby's standard library
+    # Fetch gem names:
+    require 'open-uri'
+    require 'nokogiri'
+    url = 'http://www.ruby-doc.org/stdlib-1.9.3/toc.html'
+
+    libs = Nokogiri::HTML(open(url)).css('a.mature').map do |node|
+      node.text
+    end
+
+    @external_dependencies = @external_dependencies.reject { |gem| libs.include?(gem) }
 
     @external_dependencies
   end
