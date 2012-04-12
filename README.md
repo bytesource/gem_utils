@@ -13,32 +13,30 @@ that otherwise could be quite time consuming depending on the size of the gem.
 
 ## Usage
 
-Move the Rakefile in the same directory as your gem.
-
-The rake task gem:deps can take one or two parameters.
+1. `$ gem install 'nokogiri'` (used to fetch the gem names of the Ruby Standard Library)
+2. Move the Rakefile in the same directory as your gem.
+3. Call the Rake task `gem:deps` with one or two parameters (see examples for details):
 
 ### Examples
 
 The following examples use the gem `rstore` as an example:
 
-**List runtime dependencies**
+**Listing all runtime dependencies**
 
-**Arguments**:
-
-* First: Name of the gem
+First argument: Name of the gem
 
 ``` bash
 $ rake gem:deps['rstore']
-# => ["open-uri", "nokogiri", "bigdecimal", "sequel", "csv"]
+# => ["nokogiri", "sequel"]
 ```
+_Note_: Gem names that are part of the [Ruby 1.9 Standard Library](http://www.ruby-doc.org/stdlib-1.9.3/) are automatically
+        removed from the output.
 
-**List development dependencies**
+**Listing all development dependencies**
 (Gems used for development purposes only)
 
-**Arguments**:
-
-* First: Name of the gem
-* Second: Name of the test folder
+First argument:  Name of the gem
+Second argument: Name of the test folder
 
 ``` bash
 $ rake gem:deps['rstore','spec']
